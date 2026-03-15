@@ -4,5 +4,8 @@
   "venv": "venv",
   "include": [
     "backend/solver"
+  ],
+  "exclude": [
+    "backend/venv"
   ]
 }
