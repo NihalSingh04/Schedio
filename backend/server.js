@@ -40,6 +40,7 @@ const startServer = async () => {
       cors({
         origin: [
           "http://localhost:5173",
+          process.env.FRONTEND_URL,
           "https://schedio-sable.vercel.app",
         ],
         methods: ["GET", "POST", "PUT", "DELETE"],
