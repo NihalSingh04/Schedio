@@ -10,7 +10,7 @@ import Timetable from "../../models/Timetable.js";
 import { generateTimetableWithCPSAT } from "../../service/timetableService.js";
 import { sendEmail } from "../../utils/sendEmail.js";
 
-import { getIO } from "../../socketServer.js"; // ✅ FIXED
+import { getIO } from "../../socket/socketServer.js"; // ✅ FIXED
 
 export const generateTimetableJob = inngest.createFunction(
   { id: "generate-timetable-job" },

@@ -7,7 +7,7 @@ import Timetable from "../models/Timetable.js";
 import { generateTimetablePDF } from "../utils/pdf_export.js";
 import { inngest } from "../inngest/client.js";
 
-import { getIO } from "../socketServer.js";
+import { getIO } from "../socket/socketServer.js";
 
 /* =========================================
    GENERATE TIMETABLE (INNGEST TRIGGER)
