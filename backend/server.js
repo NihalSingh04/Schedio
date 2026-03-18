@@ -48,8 +48,7 @@ const startServer = async () => {
       })
     );
 
-    // ✅ IMPORTANT for preflight
-    app.options("*", cors());
+    // ✅ IMPORTANT for prefligh
 
     /* ===============================
        HEALTH CHECK
