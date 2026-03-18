@@ -38,7 +38,7 @@ const startServer = async () => {
     app.use(
       cors({
         origin: process.env.FRONTEND_URL || "https://schedio-sable.vercel.app",
-        credentials: true,
+        withCredentials: true,
       })
     );
 
