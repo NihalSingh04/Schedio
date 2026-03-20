@@ -40,7 +40,6 @@ const startServer = async () => {
     =============================== */
     app.use((req, res, next) => {
       const allowedOrigins = [
-        "http://localhost:5173",
         "https://schedio-sable.vercel.app",
       ];
 
