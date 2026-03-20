@@ -3,7 +3,11 @@ import { io } from "socket.io-client";
 const SOCKET_URL = import.meta.env.VITE_API_URL;
 
 export const socket = io(SOCKET_URL, {
-  transports: ["websocket", "polling"], // ✅ FIXED
+  transports: ["websocket", "polling"],
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 2000,
+  timeout: 20000 // ✅ FIXED
 });
 
 // ✅ DEBUG (MUST HAVE)
