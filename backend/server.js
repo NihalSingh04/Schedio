@@ -31,12 +31,12 @@ const startServer = async () => {
     initSocket(server);
 
     /* ===============================
-       GLOBAL MIDDLEWARES
+       MIDDLEWARES
     =============================== */
     app.use(express.json());
 
     /* ===============================
-       CORS (FINAL FIX)
+       CORS
     =============================== */
     app.use((req, res, next) => {
       const allowedOrigins = [
@@ -62,7 +62,6 @@ const startServer = async () => {
 
       res.setHeader("Access-Control-Allow-Credentials", "true");
 
-      // ✅ Handle preflight
       if (req.method === "OPTIONS") {
         return res.sendStatus(200);
       }
@@ -81,7 +80,7 @@ const startServer = async () => {
     });
 
     /* ===============================
-       INNGEST ROUTE
+       INNGEST ROUTE (optional)
     =============================== */
     app.use(
       "/api/inngest",
@@ -94,7 +93,7 @@ const startServer = async () => {
     app.use("/api/test", testRoutes);
 
     /* ===============================
-       APP ROUTES
+       API ROUTES
     =============================== */
     app.use("/api/auth", authRoutes);
     app.use("/api/timetable", timetableRoutes);
@@ -115,6 +114,15 @@ const startServer = async () => {
 
     server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
+
+      /* ===============================
+         ENV DEBUG (SAFE)
+      =============================== */
+      console.log("EMAIL_USER:", process.env.EMAIL_USER);
+      console.log(
+        "EMAIL_PASS:",
+        process.env.EMAIL_PASS ? "Loaded ✅" : "Missing ❌"
+      );
     });
 
   } catch (error) {

@@ -28,9 +28,9 @@ export const createTeacher = async (req, res) => {
     }
 
     const teacher = await Teacher.create({
-      name,
-      department,
-      email,
+      name: name.trim(),
+      department: department.toUpperCase(), // ✅ FIX
+      email: email.toLowerCase(),
       subjects: subjects || [],
       availability: availability || [],
       maxHoursPerDay: maxHoursPerDay || 6,
@@ -45,7 +45,10 @@ export const createTeacher = async (req, res) => {
 export const getTeachers = async (req, res) => {
   try {
     const { department } = req.query;
-    const filter = department ? { department } : {};
+
+    const filter = {};
+    if (department) filter.department = department.toUpperCase(); // ✅ FIX
+
     const teachers = await Teacher.find(filter).sort({ name: 1 });
 
     res.json({ success: true, data: teachers });
@@ -56,6 +59,10 @@ export const getTeachers = async (req, res) => {
 
 export const updateTeacher = async (req, res) => {
   try {
+    if (req.body.department) {
+      req.body.department = req.body.department.toUpperCase(); // ✅ FIX
+    }
+
     const teacher = await Teacher.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -89,8 +96,16 @@ export const deleteTeacher = async (req, res) => {
 
 export const createSubject = async (req, res) => {
   try {
-    const { code, name, department, semester, weeklyHours, requiresLab } =
-      req.body;
+    const {
+      code,
+      name,
+      department,
+      semester,
+      weeklyHours,
+      requiresLab,
+      labDuration,
+      type,
+    } = req.body;
 
     if (!code || !name || !department || !semester || !weeklyHours) {
       return res.status(400).json({
@@ -100,23 +115,36 @@ export const createSubject = async (req, res) => {
       });
     }
 
-    const exists = await Subject.findOne({ code });
-    if (exists)
-      return res
-        .status(400)
-        .json({ success: false, message: "Subject already exists" });
-
-    const subject = await Subject.create({
-      code,
-      name,
-      department,
-      semester,
-      weeklyHours,
-      requiresLab: requiresLab || false,
+    const exists = await Subject.findOne({
+      code: code.toUpperCase(),
+      department: department.toUpperCase(),
     });
 
+    if (exists) {
+      return res.status(400).json({
+        success: false,
+        message: "Subject already exists",
+      });
+    }
+
+    const subject = await Subject.create({
+      code: code.toUpperCase(),                 // ✅ FIX
+      name: name.trim(),
+      department: department.toUpperCase(),     // ✅ FIX
+      semester: Number(semester),               // ✅ FIX
+      weeklyHours: Number(weeklyHours),         // ✅ FIX
+      requiresLab: requiresLab || false,
+      labDuration: Number(labDuration) || 2,
+      type: type || "Theory",
+    });
+
+    console.log("✅ SUBJECT SAVED:", subject);
+
     res.status(201).json({ success: true, data: subject });
+
   } catch (error) {
+    console.error("❌ SUBJECT ERROR:", error.message);
+
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -124,11 +152,14 @@ export const createSubject = async (req, res) => {
 export const getSubjects = async (req, res) => {
   try {
     const { department, semester } = req.query;
+
     const filter = {};
-    if (department) filter.department = department;
-    if (semester) filter.semester = parseInt(semester);
+
+    if (department) filter.department = department.toUpperCase(); // ✅ FIX
+    if (semester) filter.semester = Number(semester);             // ✅ FIX
 
     const subjects = await Subject.find(filter).sort({ semester: 1 });
+
     res.json({ success: true, data: subjects });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -137,6 +168,13 @@ export const getSubjects = async (req, res) => {
 
 export const updateSubject = async (req, res) => {
   try {
+    if (req.body.department) {
+      req.body.department = req.body.department.toUpperCase();
+    }
+    if (req.body.semester) {
+      req.body.semester = Number(req.body.semester);
+    }
+
     const subject = await Subject.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -180,12 +218,19 @@ export const createRoom = async (req, res) => {
     }
 
     const exists = await Room.findOne({ name });
-    if (exists)
-      return res
-        .status(400)
-        .json({ success: false, message: "Room already exists" });
+    if (exists) {
+      return res.status(400).json({
+        success: false,
+        message: "Room already exists",
+      });
+    }
 
-    const room = await Room.create({ name, department, type, capacity });
+    const room = await Room.create({
+      name: name.trim(),
+      department: department.toUpperCase(), // ✅ FIX
+      type,
+      capacity: Number(capacity),          // ✅ FIX
+    });
 
     res.status(201).json({ success: true, data: room });
   } catch (error) {
@@ -196,11 +241,13 @@ export const createRoom = async (req, res) => {
 export const getRooms = async (req, res) => {
   try {
     const { department, type } = req.query;
+
     const filter = {};
-    if (department) filter.department = department;
+    if (department) filter.department = department.toUpperCase(); // ✅ FIX
     if (type) filter.type = type;
 
     const rooms = await Room.find(filter);
+
     res.json({ success: true, data: rooms });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -209,6 +256,13 @@ export const getRooms = async (req, res) => {
 
 export const updateRoom = async (req, res) => {
   try {
+    if (req.body.department) {
+      req.body.department = req.body.department.toUpperCase();
+    }
+    if (req.body.capacity) {
+      req.body.capacity = Number(req.body.capacity);
+    }
+
     const room = await Room.findByIdAndUpdate(
       req.params.id,
       req.body,

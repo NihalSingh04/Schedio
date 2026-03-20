@@ -3,6 +3,9 @@ import nodemailer from "nodemailer";
 export const sendEmail = async ({ to, subject, text }) => {
   try {
 
+    console.log("EMAIL_USER:", process.env.EMAIL_USER);
+    console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "Loaded ✅" : "Missing ❌");
+
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 465,
@@ -11,6 +14,12 @@ export const sendEmail = async ({ to, subject, text }) => {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
       }
+    });
+
+    await sendEmail({
+      to: "your_email@gmail.com",
+      subject: "Test Mail",
+      text: "Hello from Schedio 🚀",
     });
 
     const info = await transporter.sendMail({

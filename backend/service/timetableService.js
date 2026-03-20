@@ -100,7 +100,7 @@ export const generateTimetableWithCPSAT = async ({
        PYTHON PROCESS
     ============================== */
 
-    const pythonPath = process.env.PYTHON_PATH || "python";
+    const pythonPath = process.env.PYTHON_PATH || "python3";
 
     const solverPath = path.join(
       process.cwd(),

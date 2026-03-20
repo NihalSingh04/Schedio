@@ -10,8 +10,6 @@ import Timetable from "../../models/Timetable.js";
 import { generateTimetableWithCPSAT } from "../../service/timetableService.js";
 import { sendEmail } from "../../utils/sendEmail.js";
 
-import { getIO } from "../../socket/socketServer.js";
-
 export const generateTimetableJob = inngest.createFunction(
   { id: "generate-timetable-job" },
   { event: "timetable/generate" },
@@ -19,50 +17,66 @@ export const generateTimetableJob = inngest.createFunction(
   async ({ event }) => {
     console.log("🔥 INNGEST FUNCTION STARTED");
 
-    const io = getIO();
+    await connectDB();
 
     try {
-      await connectDB();
-
       const { department, semester, section, academicYear } = event.data;
+
+      const dept = department.toUpperCase();
+      const sec = section.toUpperCase();
       const semesterNum = Number(semester);
 
-      // 🔥 PROGRESS
-      io.emit("timetableProgress", {
-        status: "processing",
-        message: "Running CP-SAT solver...",
+      /* ===============================
+         FETCH DATA
+      =============================== */
+      const teachers = await Teacher.find({ department: dept });
+      const subjects = await Subject.find({
+        department: dept,
+        semester: semesterNum,
       });
+      const rooms = await Room.find({ department: dept });
+      const constraints = await Constraint.find({ department: dept });
 
-      const teachers = await Teacher.find({ department });
-      const subjects = await Subject.find({ department, semester: semesterNum });
-      const rooms = await Room.find({ department });
-      const constraints = await Constraint.find({});
+      console.log("📊 DATA CHECK:");
+      console.log("Teachers:", teachers.length);
+      console.log("Subjects:", subjects.length);
+      console.log("Rooms:", rooms.length);
 
+      if (!teachers.length || !subjects.length || !rooms.length) {
+        throw new Error("Missing required data (teachers/subjects/rooms)");
+      }
+
+      /* ===============================
+         RUN SOLVER
+      =============================== */
       const result = await generateTimetableWithCPSAT({
         teachers,
         subjects,
         rooms,
         constraints,
         semester: semesterNum,
-        section,
+        section: sec,
       });
 
       if (!result?.success) {
         throw new Error(result?.error || "Solver failed");
       }
 
+      /* ===============================
+         SAVE TIMETABLE
+      =============================== */
       const saved = await Timetable.findOneAndUpdate(
         {
-          department,
+          department: dept,
           semester: semesterNum,
-          section,
+          section: sec,
           academicYear,
           isActive: true,
         },
         {
-          department,
+          department: dept,
           semester: semesterNum,
-          section,
+          section: sec,
           academicYear,
           data: result.data,
           conflicts: result.conflicts,
@@ -76,38 +90,21 @@ export const generateTimetableJob = inngest.createFunction(
 
       console.log("✅ Timetable saved:", saved?._id);
 
-      // 🔥 SUCCESS
-      io.emit("timetableGenerated", {
-        department,
-        semester: semesterNum,
-        section,
-        academicYear,
-      });
-
-      io.emit("timetableProgress", {
-        status: "completed",
-        message: "Timetable generated 🎉",
-      });
-
-      // 📧 EMAIL (safe)
+      /* ===============================
+         EMAIL (optional)
+      =============================== */
       if (process.env.EMAIL_USER) {
         await sendEmail({
           to: process.env.EMAIL_USER,
           subject: "Timetable Generated",
-          text: `Generated for ${department} Sem ${semester}`,
+          text: `Generated for ${dept} Sem ${semesterNum}`,
         });
       }
 
       return { success: true };
 
     } catch (error) {
-      console.error("❌ INNGEST ERROR:", error);
-
-      io.emit("timetableProgress", {
-        status: "error",
-        message: "Generation failed ❌",
-      });
-
+      console.error("❌ INNGEST ERROR:", error.message);
       throw error;
     }
   }
