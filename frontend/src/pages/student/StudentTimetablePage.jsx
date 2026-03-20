@@ -14,7 +14,7 @@ import TimetableGrid from "../../shared/timetable/TimetableGrid.jsx";
    SOCKET CONNECTION
 ================================ */
 
-const socket = io("http://localhost:5001");
+const socket = io("https://schedio-backend.onrender.com");
 
 /* ===============================
    CONSTANTS
@@ -120,7 +120,7 @@ export default function StudentTimetablePage(){
   function downloadPDF(){
 
     const url =
-`http://localhost:5001/api/timetable/export/pdf?department=${params.department}&semester=${params.semester}&section=${params.section}&academicYear=${params.academicYear}`;
+`https://schedio-backend.onrender.com/api/timetable/export/pdf?department=${params.department}&semester=${params.semester}&section=${params.section}&academicYear=${params.academicYear}`;
 
     const link = document.createElement("a");
     link.href = url;
@@ -138,7 +138,7 @@ export default function StudentTimetablePage(){
   function viewPDF(){
 
     const url =
-`http://localhost:5001/api/timetable/export/pdf?department=${params.department}&semester=${params.semester}&section=${params.section}&academicYear=${params.academicYear}`;
+`https://schedio-backend.onrender.com/api/timetable/export/pdf?department=${params.department}&semester=${params.semester}&section=${params.section}&academicYear=${params.academicYear}`;
 
     window.open(url,"_blank");
   }
