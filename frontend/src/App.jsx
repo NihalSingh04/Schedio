@@ -8,7 +8,7 @@ import FacultyDashboard from "./pages/faculty/FacultyDashboard.jsx";
 import ProtectedRoute from "./shared/auth/ProtectedRoute.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 
-import { socket } from "./socket"; // ✅ ADD
+import { socket } from "./socket";
 
 export default function App() {
 
@@ -34,15 +34,37 @@ export default function App() {
 
   }, []);
 
+  /*
+  =========================
+  CHECK LOGIN STATE
+  =========================
+  */
+
+  const token = localStorage.getItem("token");
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <Routes>
-        <Route element={<AppShell />}>
-          <Route index element={<Navigate to="/student" replace />} />
 
+        <Route element={<AppShell />}>
+
+          {/* DEFAULT LANDING PAGE FIX */}
+          <Route
+            index
+            element={
+              token
+                ? <Navigate to="/student" replace />
+                : <Navigate to="/login" replace />
+            }
+          />
+
+          {/* LOGIN */}
           <Route path="/login" element={<LoginPage />} />
+
+          {/* STUDENT */}
           <Route path="/student" element={<StudentTimetablePage />} />
 
+          {/* ADMIN */}
           <Route
             path="/admin/*"
             element={
@@ -52,6 +74,7 @@ export default function App() {
             }
           />
 
+          {/* FACULTY */}
           <Route
             path="/faculty/*"
             element={
@@ -61,8 +84,11 @@ export default function App() {
             }
           />
 
+          {/* NOT FOUND */}
           <Route path="*" element={<NotFoundPage />} />
+
         </Route>
+
       </Routes>
     </div>
   );

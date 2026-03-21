@@ -14,6 +14,7 @@ import { useToast } from "../../shared/ui/toast/ToastContext.jsx";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+//departments
 const DEPARTMENTS = [
   "CSE",
   "IT",
