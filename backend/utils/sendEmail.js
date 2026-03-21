@@ -1,4 +1,13 @@
 import nodemailer from "nodemailer";
+import dns from "dns";
+
+/*
+=================================
+FORCE IPV4 (CRITICAL FOR RENDER)
+=================================
+*/
+
+dns.setDefaultResultOrder("ipv4first");
 
 export const sendEmail = async ({ to, subject, text }) => {
   try {
@@ -9,23 +18,51 @@ export const sendEmail = async ({ to, subject, text }) => {
       process.env.EMAIL_PASS ? "Loaded ✅" : "Missing ❌"
     );
 
-    /* ===============================
-       CREATE TRANSPORTER
-    =============================== */
+    /*
+    =================================
+    CREATE TRANSPORTER (SAFE CONFIG)
+    =================================
+    */
 
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
+
+      service: "gmail",
+
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+
+      /*
+      Prevent IPv6 / network issues
+      */
+
+      connectionTimeout: 15000,
+      greetingTimeout: 10000,
+      socketTimeout: 20000,
+
+      tls: {
+        rejectUnauthorized: false,
+      },
+
+      family: 4, // FORCE IPv4
     });
 
-    /* ===============================
-       SEND EMAIL
-    =============================== */
+    /*
+    =================================
+    VERIFY CONNECTION
+    =================================
+    */
+
+    await transporter.verify();
+
+    console.log("SMTP connection ready");
+
+    /*
+    =================================
+    SEND EMAIL
+    =================================
+    */
 
     const info = await transporter.sendMail({
       from: `"Schedio" <${process.env.EMAIL_USER}>`,
@@ -36,7 +73,8 @@ export const sendEmail = async ({ to, subject, text }) => {
 
     console.log("📧 Email sent successfully");
     console.log("Message ID:", info.messageId);
-    console.log("Response:", info.response);
+
+    return info;
 
   } catch (error) {
 

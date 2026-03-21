@@ -1,7 +1,7 @@
 import PDFDocument from "pdfkit";
 
 /* =========================================
-   GENERATE TIMETABLE PDF
+   GENERATE TIMETABLE PDF (Styled Version)
 ========================================= */
 
 export const generateTimetablePDF = (entries, res) => {
@@ -13,105 +13,230 @@ export const generateTimetablePDF = (entries, res) => {
       });
     }
 
+    /*
+    ===============================
+    CREATE DOCUMENT
+    ===============================
+    */
+
     const doc = new PDFDocument({
       margin: 40,
       size: "A4",
     });
 
-    /* ===============================
-       RESPONSE HEADERS
-    ================================ */
-
     res.setHeader("Content-Type", "application/pdf");
-    // res.setHeader(
-    //   "Content-Disposition",
-    //   "attachment; filename=timetable.pdf"
-    // );
 
     res.setHeader(
-        "Content-Disposition",
-        "inline; filename=timetable.pdf"
-      );
+      "Content-Disposition",
+      "inline; filename=timetable.pdf"
+    );
 
     doc.pipe(res);
 
-    /* ===============================
-       TITLE
-    ================================ */
+    /*
+    ===============================
+    TITLE SECTION
+    ===============================
+    */
 
     doc
-      .fontSize(20)
-      .text("University Timetable", { align: "center" })
-      .moveDown(1);
+      .font("Helvetica-Bold")
+      .fontSize(22)
+      .fillColor("#1e293b")
+      .text("Schedio University Timetable", {
+        align: "center",
+      });
 
-    doc.fontSize(12).text(`Generated At: ${new Date().toLocaleString()}`);
-    doc.moveDown(1);
-
-    /* ===============================
-       TABLE HEADER
-    ================================ */
-
-    const startX = 50;
-    const startY = 150;
-
-    const columnSpacing = 130;
+    doc.moveDown(0.5);
 
     doc
-      .fontSize(12)
-      .text("Day", startX, startY)
-      .text("Slot", startX + columnSpacing, startY)
-      .text("Subject", startX + columnSpacing * 2, startY)
-      .text("Teacher", startX + columnSpacing * 3, startY)
-      .text("Room", startX + columnSpacing * 4, startY);
+      .font("Helvetica")
+      .fontSize(10)
+      .fillColor("#475569")
+      .text(
+        `Generated At: ${new Date().toLocaleString()}`,
+        {
+          align: "center",
+        }
+      );
 
-    let y = startY + 25;
+    doc.moveDown(2);
 
-    /* ===============================
-       TABLE ROWS
-    ================================ */
+    /*
+    ===============================
+    TABLE CONFIG
+    ===============================
+    */
 
-    entries.forEach((entry, index) => {
-      try {
-        const subject =
-          entry.subjectId?.name || entry.subjectId?.code || "N/A";
+    const startX = 40;
+    let y = doc.y;
 
-        const teacher = entry.teacherId?.name || "N/A";
+    const rowHeight = 28;
 
-        const room = entry.roomId?.name || "N/A";
+    const columnWidths = [
+      90,  // Day
+      60,  // Slot
+      150, // Subject
+      140, // Teacher
+      90,  // Room
+    ];
 
-        const day = entry.day || "N/A";
+    const headers = [
+      "Day",
+      "Slot",
+      "Subject",
+      "Teacher",
+      "Room",
+    ];
 
-        const slot =
-          entry.slot !== undefined && entry.slot !== null
-            ? entry.slot
-            : "-";
+    /*
+    ===============================
+    DRAW ROW FUNCTION
+    ===============================
+    */
+
+    const drawRow = (rowY, rowData, isHeader = false) => {
+      let x = startX;
+
+      doc.lineWidth(1);
+
+      rowData.forEach((text, i) => {
+        const width = columnWidths[i];
+
+        /*
+        CELL BORDER
+        */
 
         doc
-          .fontSize(10)
-          .text(day, startX, y)
-          .text(slot.toString(), startX + columnSpacing, y)
-          .text(subject, startX + columnSpacing * 2, y)
-          .text(teacher, startX + columnSpacing * 3, y)
-          .text(room, startX + columnSpacing * 4, y);
+          .rect(x, rowY, width, rowHeight)
+          .stroke();
 
-        y += 20;
+        /*
+        HEADER STYLE
+        */
 
-        /* Page break protection */
-
-        if (y > 750) {
-          doc.addPage();
-          y = 50;
+        if (isHeader) {
+          doc
+            .font("Helvetica-Bold")
+            .fillColor("#0f172a");
+        } else {
+          doc
+            .font("Helvetica")
+            .fillColor("#000000");
         }
-      } catch (rowError) {
-        console.error("Row rendering error:", rowError);
+
+        /*
+        TEXT
+        */
+
+        doc.text(
+          text,
+          x + 5,
+          rowY + 8,
+          {
+            width: width - 10,
+            align: "center",
+          }
+        );
+
+        x += width;
+      });
+    };
+
+    /*
+    ===============================
+    HEADER ROW
+    ===============================
+    */
+
+    drawRow(y, headers, true);
+
+    y += rowHeight;
+
+    /*
+    ===============================
+    TABLE ROWS
+    ===============================
+    */
+
+    entries.forEach((entry, index) => {
+      const subject =
+        entry.subjectId?.name ||
+        entry.subjectId?.code ||
+        "N/A";
+
+      const teacher =
+        entry.teacherId?.name ||
+        "N/A";
+
+      const room =
+        entry.roomId?.name ||
+        "N/A";
+
+      const day =
+        entry.day ||
+        "N/A";
+
+      const slot =
+        entry.slot !== undefined
+          ? entry.slot.toString()
+          : "-";
+
+      /*
+      PAGE BREAK
+      */
+
+      if (y + rowHeight > 750) {
+        doc.addPage();
+
+        y = 50;
+
+        drawRow(y, headers, true);
+
+        y += rowHeight;
       }
+
+      drawRow(
+        y,
+        [
+          day,
+          slot,
+          subject,
+          teacher,
+          room,
+        ],
+        false
+      );
+
+      y += rowHeight;
     });
 
-    /* ===============================
-       END DOCUMENT
-    ================================ */
+    /*
+    ===============================
+    FOOTER
+    ===============================
+    */
+
+    doc.moveDown(2);
+
+    doc
+      .fontSize(9)
+      .fillColor("#64748b")
+      .text(
+        "Generated by Schedio Timetable System",
+        {
+          align: "center",
+        }
+      );
+
+    /*
+    ===============================
+    END DOCUMENT
+    ===============================
+    */
 
     doc.end();
+
   } catch (error) {
     console.error("PDF generation failed:", error);
 
