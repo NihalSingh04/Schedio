@@ -19,9 +19,10 @@ export const generateTimetable = async (req, res) => {
       });
     }
 
-    const dept = department.toUpperCase();
-    const sec = section.toUpperCase();
+    const dept = department.toUpperCase().trim();
+    const sec = section.toUpperCase().trim();
     const semesterNum = Number(semester);
+    const year = academicYear.trim();
 
     if (isNaN(semesterNum)) {
       return res.status(400).json({
@@ -48,7 +49,7 @@ export const generateTimetable = async (req, res) => {
         department: dept,
         semester: semesterNum,
         section: sec,
-        academicYear,
+        academicYear: year,
       },
     });
 
@@ -82,22 +83,23 @@ export const getTimetable = async (req, res) => {
       });
     }
 
-    const dept = department.toUpperCase();
-    const sec = section.toUpperCase();
+    const dept = department.toUpperCase().trim();
+    const sec = section.toUpperCase().trim();
     const semesterNum = Number(semester);
+    const year = academicYear.trim();
 
     console.log("Searching timetable:", {
       dept,
       semesterNum,
       sec,
-      academicYear
+      year,
     });
 
     const timetable = await Timetable.findOne({
-      department: dept,
+      department: { $regex: `^${dept}$`, $options: "i" },
       semester: semesterNum,
-      section: sec,
-      academicYear,
+      section: { $regex: `^${sec}$`, $options: "i" },
+      academicYear: year,
       isActive: true,
     })
       .populate("data.teacherId", "name")
@@ -112,6 +114,8 @@ export const getTimetable = async (req, res) => {
         message: "Timetable not found",
       });
     }
+
+    console.log("✅ Timetable found:", timetable._id);
 
     return res.json({
       success: true,
@@ -135,11 +139,16 @@ export const exportTimetablePDF = async (req, res) => {
   try {
     const { department, semester, section, academicYear } = req.query;
 
+    const dept = department.toUpperCase().trim();
+    const sec = section.toUpperCase().trim();
+    const semesterNum = Number(semester);
+    const year = academicYear.trim();
+
     const timetable = await Timetable.findOne({
-      department: department.toUpperCase(),
-      semester: Number(semester),
-      section: section.toUpperCase(),
-      academicYear,
+      department: dept,
+      semester: semesterNum,
+      section: sec,
+      academicYear: year,
       isActive: true,
     });
 
@@ -153,6 +162,8 @@ export const exportTimetablePDF = async (req, res) => {
     generateTimetablePDF(timetable.data, res);
 
   } catch (error) {
+    console.error("❌ EXPORT PDF ERROR:", error.message);
+
     return res.status(500).json({
       success: false,
       error: error.message,
@@ -185,6 +196,8 @@ export const getTimetableByTeacher = async (req, res) => {
     });
 
   } catch (error) {
+    console.error("❌ GET BY TEACHER ERROR:", error.message);
+
     return res.status(500).json({
       success: false,
       error: error.message,
@@ -223,6 +236,8 @@ export const updateTimetableEntry = async (req, res) => {
     });
 
   } catch (error) {
+    console.error("❌ UPDATE ENTRY ERROR:", error.message);
+
     return res.status(500).json({
       success: false,
       error: error.message,
@@ -237,11 +252,16 @@ export const deleteTimetable = async (req, res) => {
   try {
     const { department, semester, section, academicYear } = req.body;
 
+    const dept = department.toUpperCase().trim();
+    const sec = section.toUpperCase().trim();
+    const semesterNum = Number(semester);
+    const year = academicYear.trim();
+
     const timetable = await Timetable.findOneAndDelete({
-      department: department.toUpperCase(),
-      semester: Number(semester),
-      section: section.toUpperCase(),
-      academicYear,
+      department: dept,
+      semester: semesterNum,
+      section: sec,
+      academicYear: year,
     });
 
     if (!timetable) {
@@ -257,6 +277,8 @@ export const deleteTimetable = async (req, res) => {
     });
 
   } catch (error) {
+    console.error("❌ DELETE TIMETABLE ERROR:", error.message);
+
     return res.status(500).json({
       success: false,
       error: error.message,
